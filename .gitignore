@@ -1,0 +1,21 @@
+# Engagement data is sensitive — never commit real scope, loot, or findings.
+engagements/*
+!engagements/_template/
+
+# Tool output / scratch
+*.log
+*.tmp
+loot/
+scans/
+
+# Claude Code config + skills — keep local, do not publish.
+.claude/
+
+# PowerShell automation scripts — keep local, do not publish.
+*.ps1
+
+# OS / editor
+Thumbs.db
+.DS_Store
+.vscode/
+*.swp
