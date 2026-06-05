@@ -14,6 +14,9 @@ scans/
 # PowerShell automation scripts — keep local, do not publish.
 *.ps1
 
+# Downloaded wordlists (third-party, regenerable) — keep local.
+wordlists/
+
 # OS / editor
 Thumbs.db
 .DS_Store

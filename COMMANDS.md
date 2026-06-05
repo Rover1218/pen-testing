@@ -3,9 +3,37 @@
 Every command you need, copy-paste ready. Run all of these from the project root:
 `cd "c:\Users\Anindya\Desktop\pen testing"`
 
-> All the `*-audit` scripts are **self-contained** (pure PowerShell, no tools to install) and
-> **write a Markdown report** automatically. Reports land in
-> `engagements/<name>/scans/<phase>-<timestamp>/report-*.md`.
+> **Every** scan script writes a Markdown report to
+> `engagements/<name>/scans/<phase>-<timestamp>/report-*.md`. The `*-audit` scripts are
+> self-contained (no tools needed); the others go deeper but need tools installed.
+
+---
+
+## ⭐ What to run, when (the full list)
+
+`<APP>` = `"C:\Users\Anindya\Desktop\Rover\projects\advanced portfolio"`
+
+| Category | Script | Time | When to run |
+|---|---|---|---|
+| **lib** | `lib/common.ps1` | — | ❌ Never run directly (shared engine) |
+| **mobile** | `mobile/flutter-scan.ps1 -Apk "<apk>"` | ~10s | When you have a built `.apk` |
+| **network** 🟢 | `network/net-audit.ps1 -Engagement <e>` | seconds | **Default** quick port check |
+| **network** 🔵 | `network/portscan.ps1 -Engagement <e>` | ~2-3 min | Deep nmap (version detection) |
+| **web** 🟢 | `web/web-audit.ps1 -Url <url> -Source <APP> -Engagement <e>` | seconds | **Default** (app must be running) |
+| **web** 🔵 | `web/web-enum.ps1 -Engagement <e> -Url <url>` | ~1-2 min | Deep nuclei CVE templates |
+| **sast** | `sast/code-audit.ps1 -Source <APP> -Engagement <e>` | seconds | App-logic bugs |
+| **sast** | `sast/sast-scan.ps1 -Target <APP> -Engagement <e>` | ~1 min | Deps (CVEs) + secrets |
+| **recon** | `recon/recon.ps1 -Engagement <e>` | seconds | Public domains only (not localhost) |
+
+🟢 = quick default · 🔵 = deep, run occasionally. For **network** and **web** pick ONE per run
+(quick by default). For **sast**, run BOTH (`code-audit` + `sast-scan` check different things).
+
+**Everyday localhost routine** (start app, then run these 3 — under a minute):
+```powershell
+./scripts/web/web-audit.ps1   -Url http://localhost:3000 -Source "<APP>" -Engagement portfolio
+./scripts/sast/code-audit.ps1 -Source "<APP>" -Engagement portfolio
+./scripts/sast/sast-scan.ps1  -Target "<APP>" -Engagement portfolio
+```
 
 ---
 
@@ -51,13 +79,34 @@ Every command you need, copy-paste ready. Run all of these from the project root
 ```
 - Decompiles, pulls API endpoints + hardcoded secrets from `libapp.so`, checks manifest, writes a report.
 
-## 3. The tool-backed scripts (need ./tools/install.ps1 first; raw output, no report)
+## 3. The tool-backed scripts (need tools installed; deeper — also write a report now)
 ```powershell
 ./scripts/recon/recon.ps1      -Engagement myapp     # subdomains, DNS, fingerprint (subfinder/whatweb)
-./scripts/network/portscan.ps1 -Engagement myapp     # full nmap scan (-sV -sC)
-./scripts/web/web-enum.ps1     -Engagement myapp -Url http://localhost:3000   # ffuf/nuclei
-./scripts/sast/sast-scan.ps1   -Target "C:\path\to\repo" -Engagement myapp    # semgrep/gitleaks/osv-scanner
+./scripts/network/portscan.ps1 -Engagement myapp     # full nmap scan (-sV -sC)  [nmap installed]
+./scripts/web/web-enum.ps1     -Engagement myapp -Url http://localhost:3000   # nuclei/ffuf  [nuclei installed]
+./scripts/sast/sast-scan.ps1   -Target "C:\path\to\repo" -Engagement myapp    # gitleaks + trivy
 ```
+Installed & working: **nmap, nuclei, ffuf, sslscan, subfinder, httpx, gitleaks, trivy**.
+Wordlist for ffuf: `wordlists/common.txt`. (semgrep removed — broken on Windows; use
+`code-audit.ps1` or `/pentest-sast` for code-pattern analysis instead.)
+
+## 3b. Testing a DEPLOYED / hosted site (not localhost)
+
+Requirements: (1) **you own it or have written permission**; (2) **know your hosting** —
+on managed hosts (Vercel/Netlify/Cloudflare) **skip nmap/net-audit** (not your servers);
+(3) **be gentle** (no DoS, mind rate limits/WAFs).
+
+```powershell
+./scripts/new-engagement.ps1 -Name site-live -Scope "yourdomain.com"
+# fill engagements/site-live/AUTHORIZATION.md, then:
+./scripts/recon/recon.ps1   -Engagement site-live                                  # subdomains + tech
+./scripts/web/web-audit.ps1 -Url https://yourdomain.com -Engagement site-live      # https now
+./scripts/web/web-enum.ps1  -Url https://yourdomain.com -Engagement site-live -Wordlist wordlists\common.txt   # nuclei + ffuf
+sslscan yourdomain.com                                                             # TLS / ciphers
+# net-audit/portscan ONLY if you own the server (not managed hosting)
+```
+What's extra vs localhost: **TLS check (sslscan)**, **subdomain recon (subfinder/httpx)**, and a
+**wordlist for ffuf content discovery**. Business-logic bugs still need a manual `/pentest-web` pass.
 
 ## 4. Read the report
 The path is printed at the end of every audit. Open it with:
@@ -102,5 +151,5 @@ The Claude skills live in `.claude/skills/` (kept local, not on GitHub):
 
 ## Three-layer coverage (how to not miss things)
 1. **Self-contained `*-audit` script** - instant, no setup. Your first pass.
-2. **Tool-backed script** (`sast-scan` with semgrep, `portscan` with nmap) - deeper, after `install.ps1`.
+2. **Tool-backed script** (`sast-scan` with gitleaks/trivy, `portscan` with nmap, `web-enum` with nuclei) - deeper.
 3. **Claude skill / manual review** - logic bugs, IDOR, business-logic flaws no scanner finds.
