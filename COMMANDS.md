@@ -92,6 +92,7 @@ The Claude skills live in `.claude/skills/` (kept local, not on GitHub):
 | `/pentest-web`     | Web + API methodology (drives web-audit + manual tests) |
 | `/pentest-network` | Host/service enumeration |
 | `/pentest-sast`    | Read a codebase and confirm real vulns |
+| `/pentest-mobile`  | Analyze a Flutter/Android APK (secrets, endpoints, manifest) |
 | `/pentest-report`  | Compile findings into a polished report |
 
 > Tip: automation (scripts) = fast first pass. Claude skills / manual review = catch the logic bugs

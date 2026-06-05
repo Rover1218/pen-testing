@@ -91,6 +91,7 @@ When you open this project in Claude Code, these guided playbooks are available:
 | `/pentest-web`     | Walk the web-app methodology (OWASP-aligned) |
 | `/pentest-network` | Host/service enumeration and analysis |
 | `/pentest-sast`    | Point Claude at another codebase to find vulns by reading the code |
+| `/pentest-mobile`  | Analyze a Flutter/Android APK (secrets, endpoints, manifest) |
 | `/pentest-report`  | Compile findings into the report template |
 
 ## Principles baked in
