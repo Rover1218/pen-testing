@@ -16,6 +16,37 @@ exploit unless the engagement's authorization level allows more.
 - [ ] Map every input: params, headers, cookies, file uploads, websockets.
   - Script: `./scripts/web/web-enum.ps1 -Engagement <name>`
 
+## 1b. Identify the app type first (SPA vs MPA) — it changes everything
+
+Before testing, figure out which kind of app you're looking at. It decides where the attack
+surface is and how to read scanner results.
+
+| | **MPA** (Multi-Page App) | **SPA** (Single-Page App) |
+|---|---|---|
+| How pages work | each URL = a real page on the server | one `index.html`; JavaScript renders everything |
+| Server returns | a different page per URL | the **same `index.html` for ANY path** (catch-all) |
+| Examples | WordPress, PHP, server-rendered | React, Vue, Angular, **Next.js**, Nuxt, Vercel/S3 sites |
+| Real logic lives in | the server pages | the **API** the SPA calls (JSON) |
+
+**How to tell it's an SPA:**
+- The page is mostly an empty shell + big JS bundles (`/_next/static/...js`).
+- **Every** path returns `200` with the *same* HTML (try `/this-does-not-exist-123`).
+- Headers like `x-nextjs-prerender`, `Server: Vercel`, or an S3/CloudFront origin.
+
+**Why it matters — the catch-all breaks naive scanners:**
+Because the server returns 200 for every path, content-discovery (`ffuf`) and exposed-file checks
+will report **thousands of false hits** (`/.env`, `/admin`, anything = 200). Calibrate:
+- `ffuf -ac` (auto-calibration) — learns the catch-all and filters it. *(the toolkit's web-enum
+  does this now.)*
+- For exposed-file checks, verify the **content-type / body** is the real file, not the SPA
+  fallback HTML. *(web-audit.ps1 does this.)*
+
+**Where to actually test each:**
+- **SPA** → little server logic in the HTML. Focus on: secrets in the JS bundle, missing security
+  headers, DOM-based XSS, the **API it calls** (auth/IDOR/injection — see [`api.md`](api.md)), and
+  bucket/CDN config if S3/CloudFront-hosted.
+- **MPA** → the full server-side playbook below applies directly (injection, server auth, etc.).
+
 ## 2. Configuration & deployment
 - [ ] TLS config (`testssl.sh` / `sslscan`), HSTS, weak ciphers, cert validity.
 - [ ] Security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy).
