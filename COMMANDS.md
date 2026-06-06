@@ -9,6 +9,21 @@ Every command you need, copy-paste ready. Run all of these from the project root
 
 ---
 
+## 🚀 Shortcut: the launcher (instead of typing each command)
+
+`scan.ps1` runs the right scripts for you and prints a combined summary. Use the **menu** or a **one-liner**:
+```powershell
+./scan.ps1                                                          # interactive menu (pick 1-6)
+./scan.ps1 -Mode local  -Url http://localhost:3000 -Source "<APP>" -Engagement myapp
+./scan.ps1 -Mode hosted -Url https://yoursite.com -Engagement site-live
+./scan.ps1 -Mode code   -Source "<APP>" -Engagement myapp
+./scan.ps1 -Mode mobile -Apk "C:\app.apk" -Engagement myapp
+./scan.ps1 -Mode dashboard                                         # build + open the HTML dashboard
+```
+- **local** = web-audit + code-audit + sast-scan (the 3-in-1 for a running app + its source)
+- **hosted** = recon + web-audit + web-enum + TLS (skips network scan for managed hosts)
+- **dashboard** = aggregates every engagement's latest reports into `dashboard.html` (open in a browser)
+
 ## ⭐ What to run, when (the full list)
 
 `<APP>` = `"C:\Users\Anindya\Desktop\Rover\projects\advanced portfolio"`
