@@ -1,106 +1,105 @@
-# Universal Pen-Testing Project
+# Universal Pen-Testing Toolkit
 
-A reusable, structured toolkit + Claude-guided playbooks for performing **authorized**
-penetration testing against any target — web apps, APIs, networks/hosts, source code (SAST),
-and mobile/thick clients.
+A reusable, structured methodology + automation toolkit for performing **authorized**
+penetration testing against any target — **web apps, APIs, networks/hosts, source code (SAST),
+and mobile/Flutter apps**.
 
-You point it at a new target, create an *engagement folder*, and follow the playbooks
-(either driving the scripts yourself or having Claude Code walk you through them).
-Everything from one engagement is self-contained, so the same project is reused for every target.
+Point it at a target, and it creates a self-contained *engagement*, runs the relevant scans,
+and produces a clean severity-ranked report. The same toolkit is reused for every target.
 
-> ⚠️ **Authorized testing only.** Read [`AUTHORIZATION.md`](AUTHORIZATION.md) before touching
-> any target. Only test systems you own or have **written permission** to test. Unauthorized
-> testing is illegal in most jurisdictions.
-
-> ℹ️ **Note on this repository.** The PowerShell automation scripts (`scripts/`, `tools/`) and the
-> Claude Code skills (`.claude/`) are kept **local-only** and are intentionally not published here.
-> This repo contains the methodology playbooks, checklists, and templates. Commands like
-> `./scripts/recon/recon.ps1` referenced below run from the local copy of the toolkit.
+> ⚠️ **Authorized testing only.** See [`AUTHORIZATION.md`](AUTHORIZATION.md). Only test systems
+> you own or have **written permission** to test. Unauthorized testing is illegal in most
+> jurisdictions (CFAA, Computer Misuse Act, and equivalents).
 
 ---
 
-## How it's organized
+## 📂 What's in this repository (public)
+
+This repo contains the **methodology and templates** — the reusable knowledge that drives the
+testing. It's designed so anyone can follow the same process.
 
 ```
-pen testing/
-├── README.md              ← you are here
-├── AUTHORIZATION.md       ← scope + rules-of-engagement template (fill out per engagement)
-├── playbooks/             ← methodology: step-by-step testing guides per target type
-│   ├── web.md
-│   ├── api.md
-│   ├── network.md
-│   ├── sast.md
-│   └── mobile.md
-├── checklists/            ← coverage checklists (OWASP, recon, reporting)
-├── scripts/               ← PowerShell automation wrapping real tools
-│   ├── lib/common.ps1     ← shared helpers (logging, engagement paths, scope guard)
-│   ├── new-engagement.ps1 ← scaffold a fresh engagement folder
-│   ├── recon/recon.ps1
-│   ├── network/portscan.ps1
-│   ├── web/web-enum.ps1
-│   ├── sast/sast-scan.ps1
-│   └── mobile/flutter-scan.ps1  ← decompile APK, find secrets/endpoints (Flutter-aware)
-├── tools/                 ← install + verify the external CLI tools
-│   ├── install.ps1
-│   └── check-tools.ps1
-├── reports/_template.md   ← findings report template
-├── engagements/           ← one folder per target (git-ignored; holds real scope data)
-│   └── _template/
-└── .claude/               ← Claude Code skills + permission settings
-    ├── settings.json
-    └── skills/
+.
+├── playbooks/            ← step-by-step testing methodology per target type
+│   ├── web.md            ·  OWASP-aligned web app testing
+│   ├── api.md            ·  REST/GraphQL (OWASP API Top 10)
+│   ├── network.md        ·  host/service enumeration
+│   ├── sast.md           ·  source code review
+│   └── mobile.md         ·  Android/Flutter (+ traffic interception)
+├── checklists/
+│   ├── methodology.md    ·  end-to-end engagement phases
+│   └── severity.md       ·  CVSS scoring + finding format
+├── reports/_template.md  ← final report template
+├── engagements/_template/← per-target workspace skeleton (scope, notes, findings)
+├── AUTHORIZATION.md      ← rules-of-engagement / scope template
+└── COMMANDS.md           ← command reference (for the local automation layer)
 ```
 
-## Quickstart
+## 🔒 What's kept local (not published here)
 
-### 1. One-time setup — install the tooling
-```powershell
-# from the project root, in PowerShell
-./tools/install.ps1        # installs nmap, nuclei, ffuf, etc. via winget/scoop/choco
-./tools/check-tools.ps1    # verifies what's available and prints versions
-```
+The **automation layer is intentionally private** and excluded from this repo via
+[`.gitignore`](.gitignore). If you're browsing this repo and don't see scripts — that's by design.
+Kept local only:
 
-### 2. Start an engagement
-```powershell
-./scripts/new-engagement.ps1 -Name acme-web -Scope "app.acme.com,api.acme.com"
-```
-This creates `engagements/acme-web/` with a pre-filled scope file, notes, loot, and report
-skeleton. **Fill out `engagements/acme-web/AUTHORIZATION.md` before running anything.**
-
-### 3. Run / follow the playbook
-Either drive the scripts directly:
-```powershell
-./scripts/recon/recon.ps1     -Engagement acme-web
-./scripts/network/portscan.ps1 -Engagement acme-web
-./scripts/web/web-enum.ps1     -Engagement acme-web
-```
-…or open Claude Code in this folder and say e.g. **`/pentest-web`** to be guided through the
-web methodology against the engagement target, with Claude running and interpreting the tools.
-
-### 4. Report
-Findings accumulate in `engagements/<name>/findings/`. Generate the final report from
-[`reports/_template.md`](reports/_template.md) (or ask Claude: *"compile the report for acme-web"*).
-
-## The Claude skills
-
-When you open this project in Claude Code, these guided playbooks are available:
-
-| Command | What it does |
+| Component | Why it's local |
 |---|---|
-| `/pentest-recon`   | OSINT + asset discovery for the engagement target |
-| `/pentest-web`     | Walk the web-app methodology (OWASP-aligned) |
-| `/pentest-network` | Host/service enumeration and analysis |
-| `/pentest-sast`    | Point Claude at another codebase to find vulns by reading the code |
-| `/pentest-mobile`  | Analyze a Flutter/Android APK (secrets, endpoints, manifest) |
-| `/pentest-report`  | Compile findings into the report template |
+| `scan.ps1` (the launcher) + `scripts/*.ps1` | the actual scanners/automation |
+| `.claude/` (Claude Code skills + settings) | AI-assisted testing helpers |
+| `engagements/<target>/` (real engagement data) | sensitive: scopes, findings, loot |
+| `wordlists/` | third-party wordlists |
 
-## Principles baked in
+So this public repo = **the playbook**. The automation that executes it stays on the operator's
+machine.
 
-- **Scope guard.** Scripts read the engagement's scope file and refuse to run against
-  out-of-scope hosts. Don't bypass it.
-- **Everything logged.** Each script timestamps its output under the engagement so the
-  test is reproducible and auditable.
-- **Non-destructive by default.** Playbooks favor read/observe over exploit; anything
-  intrusive is called out and gated behind explicit confirmation.
+---
 
-See [`playbooks/`](playbooks/) for the actual methodology.
+## 🧭 The approach
+
+Everything funnels toward the **same model**: discover the surface → probe it → confirm the
+finding → record it. Each target type applies that loop differently:
+
+| Target | What it checks |
+|---|---|
+| **Web / API** | security headers, exposed files, auth on endpoints, injection, CORS, TLS |
+| **Network** | open ports + exposed services (databases, RDP, SMB…) — *owned servers only* |
+| **Source (SAST)** | secrets, injection sinks, missing auth, vulnerable dependencies (CVEs) |
+| **Mobile (APK)** | hardcoded secrets, API endpoints in the binary, manifest, pinning |
+
+### The 3-layer coverage model
+No single tool is complete. Real coverage = three layers:
+
+1. **Self-contained scanners** — instant, zero-setup first pass (the bulk of common bugs).
+2. **Tool-backed scanners** (nmap, nuclei, gitleaks, trivy, semgrep…) — deeper, more authoritative.
+3. **Manual review + triage** — the human/AI layer for logic bugs, authenticated testing, and
+   separating real findings from false positives. **This is the part automation can't do.**
+
+> Automation *finds* candidates; a human *verifies* them. A scan is a list of leads, not a verdict.
+
+---
+
+## 🚀 Workflow (operator, with the local automation)
+
+```
+1. Start an engagement   → an isolated workspace (scope + notes + findings) is created
+2. Run the relevant scan → web / hosted / source / mobile / network
+3. Read the report       → severity-ranked Markdown in engagements/<target>/scans/
+4. Triage + manual pass  → confirm real findings, do authenticated/logic testing
+5. Compile the report    → from reports/_template.md
+```
+
+Operators: see [`COMMANDS.md`](COMMANDS.md) for the exact commands and the launcher menu.
+
+## ✅ Principles baked in
+
+- **Scope guard** — scans refuse to run against any target not in the engagement's scope file.
+- **Authorized only** — every engagement requires a completed `AUTHORIZATION.md`.
+- **Non-destructive by default** — read/observe over exploit; intrusive actions are gated.
+- **Everything logged** — timestamped, reproducible, auditable output per engagement.
+- **Managed-hosting aware** — network scanning is for servers you control (a VPS), **not**
+  managed hosts (Vercel/Netlify/S3) where the infrastructure isn't yours.
+
+## 📖 Start here
+
+Read the methodology in [`playbooks/`](playbooks/), the engagement phases in
+[`checklists/methodology.md`](checklists/methodology.md), and the scoring guide in
+[`checklists/severity.md`](checklists/severity.md).
